@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usage Metering Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">USAGE METERING AND QUOTA SERVICE</p>
+      <h1>Quota Dashboard</h1>
+      <p class="subtitle">Manage accounts, user plans, and usage limits.</p>
+    </div>
+    <span id="connection" class="pill">Checking service...</span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1. Account</h2>
+      <p class="muted">Create an account or load an existing account using its API key.</p>
+      <form id="account-form" class="form-grid">
+        <label>
+          Account name
+          <input id="account-name" required maxlength="150" placeholder="My application">
+        </label>
+        <label>
+          Account plan
+          <select id="account-plan" required>
+            <option value="">Loading plans...</option>
+          </select>
+        </label>
+        <button type="submit">Create account</button>
+      </form>
+
+      <form id="key-form" class="form-grid key-form">
+        <label>
+          Account API key
+          <input id="api-key" type="password" autocomplete="off" placeholder="Paste an existing API key">
+        </label>
+        <button type="submit" class="secondary">Load account</button>
+      </form>
+      <p id="account-message" class="message" role="status"></p>
+      <div id="account-details" class="details hidden"></div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Users and plans</h2>
+      <p class="muted">Create separate users under the same account and assign different user plans.</p>
+      <form id="user-form" class="form-grid">
+        <label>
+          External user ID
+          <input id="external-user-id" required maxlength="150" placeholder="user-001">
+        </label>
+        <label>
+          User plan
+          <select id="user-plan" required>
+            <option value="">Load an account first</option>
+          </select>
+        </label>
+        <button type="submit">Add user</button>
+      </form>
+      <p id="user-message" class="message" role="status"></p>
+      <div id="users-list" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>3. Submit usage</h2>
+      <form id="usage-form" class="form-grid">
+        <label>
+          User
+          <select id="usage-user" required>
+            <option value="">Create a user first</option>
+          </select>
+        </label>
+        <label>
+          Units
+          <input id="units" type="number" min="1" step="1" required value="10">
+        </label>
+        <label>
+          Request ID
+          <input id="request-id" required maxlength="200">
+        </label>
+        <button type="submit">Submit usage</button>
+      </form>
+      <p class="muted small">Each request ID should be unique. Replaying the same request ID with identical input is idempotent.</p>
+      <div id="usage-result" class="result hidden" role="status"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>4. Usage report</h2>
+          <p class="muted">Review monthly account and user allowances.</p>
+        </div>
+        <button id="refresh-report" type="button" class="secondary">Refresh report</button>
+      </div>
+      <div id="report" class="report-grid">
+        <p class="muted">Load an account to view usage.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>5. Request history</h2>
+          <p class="muted">Accepted and rejected requests for the current month.</p>
+        </div>
+        <button id="refresh-history" type="button" class="secondary">Refresh history</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>User</th>
+              <th>Units</th>
+              <th>Status</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="5" class="muted">Load an account to view history.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <p id="global-message" class="message" role="status"></p>
+  </main>
+
+  <footer>Usage Metering and Quota Service · Demo client</footer>
+</body>
+</html>

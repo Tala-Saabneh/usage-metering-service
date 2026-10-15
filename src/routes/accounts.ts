@@ -28,6 +28,7 @@ router.post("/", async (req, res) => {
        FROM plans
        WHERE id = $1
          AND plan_type = 'account'
+         AND is_predefined = true
        LIMIT 1`,
       [planId]
     );

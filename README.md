@@ -182,3 +182,48 @@ tests/
 ## License
 
 License information has not yet been specified.
+
+## Running with Docker Compose
+
+Docker and Docker Compose are required.
+
+Make sure your local `.env` file contains a `DB_PASSWORD` value. Do not commit `.env` or real credentials.
+
+Validate the Compose configuration:
+
+```bash
+docker compose config --quiet
+```
+
+Build and start the application and PostgreSQL database:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+Check the service status:
+
+```bash
+docker compose ps
+```
+
+Check the health endpoint:
+
+```bash
+curl http://localhost:3000/health
+```
+
+Stop the services without deleting the database volume:
+
+```bash
+docker compose down
+```
+
+The PostgreSQL initialization scripts run when the database volume is initialized for the first time.
+
+## Type Checking
+
+```bash
+npm run typecheck
+```

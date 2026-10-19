@@ -55,7 +55,9 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![Successful Usage Request](screenshots/01-successful-request.png)
+<img width="1421" height="772" alt="image" src="https://github.com/user-attachments/assets/9fb3c500-3882-4b08-864e-85edb666d4d1" />
+
+<img width="1402" height="515" alt="image" src="https://github.com/user-attachments/assets/7f2adeea-a42a-4a32-a586-278fde60717b" />
 
 ---
 
@@ -80,7 +82,10 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![User Quota Rejection](screenshots/02-user-quota-rejection.png)
+<img width="1262" height="870" alt="image" src="https://github.com/user-attachments/assets/f3ddebc6-c083-4329-a81c-9b5ef013c47a" />
+<img width="1222" height="370" alt="image" src="https://github.com/user-attachments/assets/564d065d-fd42-4818-9cd8-1559d06fc5cf" />
+<img width="1282" height="542" alt="image" src="https://github.com/user-attachments/assets/fac7e536-fc1f-4b00-af97-0455aade3c73" />
+
 
 ---
 
@@ -106,7 +111,10 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![Account Quota Rejection](screenshots/03-account-quota-rejection.png)
+<img width="1233" height="435" alt="image" src="https://github.com/user-attachments/assets/5fa2884e-c178-45ae-9a38-0c55f6f2585f" />
+
+<img width="1327" height="777" alt="image" src="https://github.com/user-attachments/assets/72c9d32d-2b0c-46b3-a845-adbf90eb5ad9" />
+
 
 ---
 
@@ -130,7 +138,10 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![Duplicate Request Handling](screenshots/04-duplicate-request.png)
+<img width="1225" height="457" alt="image" src="https://github.com/user-attachments/assets/2115c2fe-303e-40d1-917f-cbedd3bce4cd" />
+<img width="1228" height="440" alt="image" src="https://github.com/user-attachments/assets/e9bb5b99-d9b8-45fa-82ac-99f52c6198dd" />
+<img width="1238" height="711" alt="image" src="https://github.com/user-attachments/assets/5ad85b71-04dc-4a3d-aecd-9560e6d80c78" />
+
 
 ---
 
@@ -153,7 +164,8 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![Invalid API Key](screenshots/05-invalid-api-key.png)
+<img width="1267" height="537" alt="image" src="https://github.com/user-attachments/assets/29dd0840-3782-4cab-94d1-441974df83f0" />
+<img width="396" height="122" alt="image" src="https://github.com/user-attachments/assets/8eb631bd-204f-4c83-9317-44e7aaff4fb7" />
 
 ---
 
@@ -177,7 +189,8 @@ Only tests that have been executed should be marked as **PASS** or **FAIL**. Tes
 
 **Evidence:**
 
-![Usage Report](screenshots/06-usage-report.png)
+<img width="1193" height="848" alt="image" src="https://github.com/user-attachments/assets/52cd8317-643e-4b0c-bb3b-db9967942440" />
+
 
 ---
 

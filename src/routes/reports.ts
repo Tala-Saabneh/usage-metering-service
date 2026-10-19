@@ -1,28 +1,10 @@
-
 import { Router } from "express";
-import { createHash } from "node:crypto";
 import pool from "../db/pool.js";
+import { requireApiKey } from "../middleware/auth.js";
 
 const router = Router();
 
-async function getAccountId(apiKey: string) {
-  const apiKeyHash = createHash("sha256")
-    .update(apiKey)
-    .digest("hex");
-
-  const result = await pool.query(
-    `SELECT id
-     FROM accounts
-     WHERE api_key_hash = $1`,
-    [apiKeyHash]
-  );
-
-  if (result.rowCount === 0) {
-    return null;
-  }
-
-  return result.rows[0].id as string;
-}
+router.use(requireApiKey);
 
 function getMonth(value: unknown): string | null {
   if (value === undefined) {
@@ -45,15 +27,50 @@ function getMonth(value: unknown): string | null {
   return `${value}-01`;
 }
 
-router.get("/summary", async (req, res) => {
-  const apiKey = req.header("x-api-key");
+function validExternalUserId(value: unknown): boolean {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= 150
+  );
+}
+
+function parseLimit(value: unknown): number | null {
+  if (value === undefined) {
+    return 20;
+  }
+
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const limit = Number(value);
+
+  return Number.isSafeInteger(limit) && limit >= 1 && limit <= 100
+    ? limit
+    : null;
+}
+
+function parseOffset(value: unknown): number | null {
+  if (value === undefined) {
+    return 0;
+  }
+
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const offset = Number(value);
+
+  return Number.isSafeInteger(offset) && offset >= 0
+    ? offset
+    : null;
+}
+
+router.get("/summary", async (req, res, next) => {
+  const accountId = res.locals.accountId as string;
   const month = getMonth(req.query.month);
   const externalUserId = req.query.externalUserId;
-
-  if (!apiKey) {
-    res.status(401).json({ error: "API key is required" });
-    return;
-  }
 
   if (!month) {
     res.status(400).json({
@@ -64,9 +81,7 @@ router.get("/summary", async (req, res) => {
 
   if (
     externalUserId !== undefined &&
-    (typeof externalUserId !== "string" ||
-      externalUserId.trim().length === 0 ||
-      externalUserId.length > 150)
+    !validExternalUserId(externalUserId)
   ) {
     res.status(400).json({
       error: "Invalid externalUserId"
@@ -75,13 +90,6 @@ router.get("/summary", async (req, res) => {
   }
 
   try {
-    const accountId = await getAccountId(apiKey);
-
-    if (!accountId) {
-      res.status(401).json({ error: "Invalid API key" });
-      return;
-    }
-
     const accountResult = await pool.query(
       `SELECT
          a.id AS account_id,
@@ -98,8 +106,12 @@ router.get("/summary", async (req, res) => {
       [accountId, month]
     );
 
-    const account = accountResult.rows[0];
+    if (accountResult.rowCount === 0) {
+      res.status(404).json({ error: "Account not found" });
+      return;
+    }
 
+    const account = accountResult.rows[0];
     const accountAllowance = Number(account.monthly_allowance);
     const accountConsumed = Number(account.consumed_units);
 
@@ -157,24 +169,16 @@ router.get("/summary", async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("Failed to get usage summary:", error);
-
-    res.status(500).json({
-      error: "Internal server error"
-    });
+    next(error);
   }
 });
 
-router.get("/history", async (req, res) => {
-  const apiKey = req.header("x-api-key");
+router.get("/history", async (req, res, next) => {
+  const accountId = res.locals.accountId as string;
   const month = getMonth(req.query.month);
   const externalUserId = req.query.externalUserId;
-  const rawLimit = req.query.limit;
-
-  if (!apiKey) {
-    res.status(401).json({ error: "API key is required" });
-    return;
-  }
+  const limit = parseLimit(req.query.limit);
+  const offset = parseOffset(req.query.offset);
 
   if (!month) {
     res.status(400).json({
@@ -183,25 +187,23 @@ router.get("/history", async (req, res) => {
     return;
   }
 
-  const limit =
-    rawLimit === undefined ? 20 : Number(rawLimit);
-
-  if (
-    !Number.isInteger(limit) ||
-    limit < 1 ||
-    limit > 100
-  ) {
+  if (limit === null) {
     res.status(400).json({
       error: "limit must be an integer between 1 and 100"
     });
     return;
   }
 
+  if (offset === null) {
+    res.status(400).json({
+      error: "offset must be a non-negative integer"
+    });
+    return;
+  }
+
   if (
     externalUserId !== undefined &&
-    (typeof externalUserId !== "string" ||
-      externalUserId.trim().length === 0 ||
-      externalUserId.length > 150)
+    !validExternalUserId(externalUserId)
   ) {
     res.status(400).json({
       error: "Invalid externalUserId"
@@ -210,13 +212,6 @@ router.get("/history", async (req, res) => {
   }
 
   try {
-    const accountId = await getAccountId(apiKey);
-
-    if (!accountId) {
-      res.status(401).json({ error: "Invalid API key" });
-      return;
-    }
-
     const result = await pool.query(
       `SELECT
          r.id,
@@ -237,14 +232,15 @@ router.get("/history", async (req, res) => {
            OR u.external_user_id = $3
          )
        ORDER BY r.created_at DESC, r.id DESC
-       LIMIT $4`,
+       LIMIT $4 OFFSET $5`,
       [
         accountId,
         month,
         typeof externalUserId === "string"
           ? externalUserId.trim()
           : null,
-        limit
+        limit,
+        offset
       ]
     );
 
@@ -252,14 +248,11 @@ router.get("/history", async (req, res) => {
       month: month.slice(0, 7),
       count: result.rows.length,
       limit,
+      offset,
       history: result.rows
     });
   } catch (error) {
-    console.error("Failed to get usage history:", error);
-
-    res.status(500).json({
-      error: "Internal server error"
-    });
+    next(error);
   }
 });
 

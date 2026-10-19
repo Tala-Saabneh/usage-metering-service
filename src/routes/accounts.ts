@@ -6,6 +6,11 @@ import pool from "../db/pool.js";
 const router = Router();
 
 router.post("/", async (req, res) => {
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    res.status(400).json({ error: "A JSON object body is required" });
+    return;
+  }
+
   const { name, planId } = req.body;
 
   if (

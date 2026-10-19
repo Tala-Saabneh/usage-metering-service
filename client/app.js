@@ -52,9 +52,13 @@ function fillPlanSelect(selectId, planList, placeholder) {
 }
 
 async function loadPlans(type, publicOnly = false) {
-  const suffix = publicOnly ? "&predefinedOnly=true" : "";
-  const data = await api(`/api/plans?planType=${type}${suffix}`);
+  const path = publicOnly
+    ? `/api/plans/predefined?planType=${encodeURIComponent(type)}`
+    : `/api/plans?planType=${encodeURIComponent(type)}`;
+
+  const data = await api(path);
   plans[type] = data.plans || [];
+
   fillPlanSelect(
     type === "account" ? "account-plan" : "user-plan",
     plans[type],
@@ -97,6 +101,13 @@ async function connectWithKey(key) {
 }
 
 async function refreshUsersFromKnownList() {
+  const data = await api("/api/users");
+  users = (data.users || []).map((user) => ({
+    externalUserId: user.externalUserId,
+    planId: user.planId,
+    planName: user.planName
+  }));
+
   const select = $("usage-user");
   select.innerHTML = '<option value="">Choose a user</option>';
 
@@ -106,6 +117,7 @@ async function refreshUsersFromKnownList() {
     option.textContent = user.externalUserId;
     select.appendChild(option);
   }
+
   renderUsers();
 }
 
@@ -309,7 +321,7 @@ $("usage-form").addEventListener("submit", async (event) => {
     });
 
     resultBox.classList.add("accepted");
-    resultBox.textContent = `Request accepted. HTTP ${result.status}. ${JSON.stringify(result.body || result)}`;
+    resultBox.textContent = `Request processed. ${JSON.stringify(result.body || result)}`;
   } catch (error) {
     resultBox.classList.add("rejected");
     resultBox.textContent = `Request failed or was rejected: ${error.message}`;

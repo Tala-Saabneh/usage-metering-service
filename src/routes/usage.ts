@@ -5,6 +5,12 @@ const router = Router();
 
 router.post("/", async (req, res) => {
   const apiKey = req.header("x-api-key");
+
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+    res.status(400).json({ error: "A JSON object body is required" });
+    return;
+  }
+
   const { externalUserId, requestId, units } = req.body;
 
   if (

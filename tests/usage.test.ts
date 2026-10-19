@@ -259,4 +259,112 @@ describe("Usage consumption", () => {
     expect(Number(accountUsage.rows[0].consumed_units)).toBe(50);
     expect(Number(userUsage.rows[0].consumed_units)).toBe(50);
   });
+
+  it("rejects an invalid API key", async () => {
+    const result = await consumeUsage({
+      apiKey: "invalid-api-key",
+      externalUserId,
+      requestId: "invalid-key-request",
+      units: 1
+    });
+
+    expect(result.status).toBe(401);
+    expect(result.body.error).toBe("Invalid API key");
+  });
+
+  it("returns not found when the user does not belong to the account", async () => {
+    const result = await consumeUsage({
+      apiKey,
+      externalUserId: "unknown-user",
+      requestId: "unknown-user-request",
+      units: 1
+    });
+
+    expect(result.status).toBe(404);
+    expect(result.body.error).toBe("User not found for this account");
+  });
+
+  it("rejects requests above the account per-request limit", async () => {
+    const result = await consumeUsage({
+      apiKey,
+      externalUserId,
+      requestId: "account-request-limit",
+      units: 21
+    });
+
+    expect(result.status).toBe(429);
+    expect(result.body.rejection_scope).toBe("account");
+  });
+
+  it("rejects usage above the account monthly allowance", async () => {
+    await pool.query(
+      `UPDATE users
+       SET plan_id = (
+         SELECT id FROM plans
+         WHERE name = 'Premium'
+           AND plan_type = 'user'
+           AND is_predefined = true
+         LIMIT 1
+       )
+       WHERE id = $1`,
+      [userId]
+    );
+
+    for (let i = 1; i <= 10; i++) {
+      const result = await consumeUsage({
+        apiKey,
+        externalUserId,
+        requestId: `account-monthly-${i}`,
+        units: 10
+      });
+
+      expect(result.status).toBe(201);
+    }
+
+    const rejected = await consumeUsage({
+      apiKey,
+      externalUserId,
+      requestId: "account-monthly-over-limit",
+      units: 10
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(rejected.body.rejection_scope).toBe("account");
+
+    const usage = await pool.query(
+      `SELECT consumed_units
+       FROM account_monthly_usage
+       WHERE account_id = $1`,
+      [accountId]
+    );
+
+    expect(Number(usage.rows[0].consumed_units)).toBe(100);
+  });
+
+  it("replays a rejected request without creating a second record", async () => {
+    const input = {
+      apiKey,
+      externalUserId,
+      requestId: "rejected-idempotent-request",
+      units: 11
+    };
+
+    const first = await consumeUsage(input);
+    const second = await consumeUsage(input);
+
+    expect(first.status).toBe(429);
+    expect(first.body.status).toBe("rejected");
+    expect(second.status).toBe(200);
+    expect(second.body.idempotentReplay).toBe(true);
+
+    const records = await pool.query(
+      `SELECT id
+       FROM usage_requests
+       WHERE account_id = $1 AND request_id = $2`,
+      [accountId, input.requestId]
+    );
+
+    expect(records.rows).toHaveLength(1);
+  });
+
 });
